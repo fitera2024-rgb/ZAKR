@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Безопасные корректирующие переносы по иерархии организаций">
+  <title>HAT — переносы по счетам</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="HAT — главная">
+      <span class="brand-mark">H</span>
+      <span><strong>Hierarchy Account Transfer</strong><small>Контроль корректирующих переносов</small></span>
+    </a>
+    <div class="contract"><span class="pulse"></span> HAT-TRANSFER-CONTRACT-v1</div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div>
+        <span class="eyebrow">Финансовый контроль · Детерминированный расчёт</span>
+        <h1>Переносы, которые<br><em>можно доказать</em></h1>
+        <p>Загрузите журнал и иерархию. Сервис проверит каждую аналитику, смоделирует
+          остатки до и после и не пропустит небезопасную проводку.</p>
+      </div>
+      <div class="formula-card" aria-label="Критический инвариант">
+        <span>Критический инвариант</span>
+        <code>net = debit − credit</code>
+        <div><b>Дт</b> аналитика с избыточным кредитом</div>
+        <div><b>Кт</b> аналитика с остаточным дебетом</div>
+        <small>Ручное изменение направления запрещено</small>
+      </div>
+    </section>
+
+    <nav class="steps" aria-label="Этапы запуска">
+      <button class="step active" data-step="upload"><span>1</span><b>Файлы</b><small>Входные данные</small></button>
+      <i></i><button class="step" data-step="selection" disabled><span>2</span><b>Параметры</b><small>Область анализа</small></button>
+      <i></i><button class="step" data-step="results" disabled><span>3</span><b>Результат</b><small>Контроль и экспорт</small></button>
+    </nav>
+
+    <section id="notice" class="notice hidden" role="alert"></section>
+
+    <section id="upload-panel" class="panel active" aria-labelledby="upload-title">
+      <div class="panel-heading"><div><span>Шаг 1</span><h2 id="upload-title">Исходные файлы</h2></div>
+        <p>Данные обрабатываются локально и не покидают сервер.</p></div>
+      <form id="upload-form">
+        <div class="upload-grid">
+          <label class="dropzone required" for="journal">
+            <input id="journal" name="journals" type="file" accept=".xlsx" multiple required>
+            <span class="file-icon">↗</span><b>Полный журнал проводок</b>
+            <small>Один или несколько XLSX · обе стороны проводок</small><strong>Выбрать файлы</strong>
+            <output></output>
+          </label>
+          <label class="dropzone required" for="hierarchy">
+            <input id="hierarchy" name="hierarchy" type="file" accept=".xlsx" required>
+            <span class="file-icon">⌘</span><b>Иерархия организаций</b>
+            <small>XLSX · стабильные коды и владельцы ЦФО</small><strong>Выбрать файл</strong>
+            <output></output>
+          </label>
+          <label class="dropzone" for="template">
+            <input id="template" name="template" type="file" accept=".xlsx">
+            <span class="file-icon">▦</span><b>Шаблон выгрузки 1С</b>
+            <small>Необязательно для анализа · обязателен для экспорта</small><strong>Выбрать файл</strong>
+            <output></output>
+          </label>
+          <label class="dropzone" for="rules-file">
+            <input id="rules-file" name="rules" type="file" accept=".yaml,.yml">
+            <span class="file-icon">⚙</span><b>Профиль правил</b>
+            <small>Необязательно · YAML с доказанными парами</small><strong>Выбрать файл</strong>
+            <output></output>
+          </label>
+        </div>
+        <div class="action-row"><span><b>Конфиденциальность:</b> бухгалтерские файлы не добавляются в Git.</span>
+          <button class="primary" type="submit">Проверить файлы <b>→</b></button></div>
+      </form>
+    </section>
+
+    <section id="selection-panel" class="panel" aria-labelledby="selection-title">
+      <div class="panel-heading"><div><span>Шаг 2</span><h2 id="selection-title">Параметры анализа</h2></div>
+        <p id="inspection-meta"></p></div>
+      <form id="analysis-form">
+        <div class="form-grid">
+          <label><span>Верхний уровень иерархии</span><select id="root" required></select><small id="scope-hint"></small></label>
+          <label><span>Сценарий</span><select id="scenario" required></select></label>
+          <label><span>Дата начала</span><input id="date-from" type="date" required></label>
+          <label><span>Дата окончания</span><input id="date-to" type="date" required></label>
+        </div>
+        <div class="account-heading"><div><span>Точные счета</span><small>Субсчета не включаются по префиксу</small></div>
+          <input id="account-search" type="search" placeholder="Найти счёт…"></div>
+        <div id="account-list" class="account-list"></div>
+        <div class="action-row"><button class="secondary" type="button" data-back="upload">← Назад</button>
+          <button class="primary" type="submit">Запустить анализ <b>→</b></button></div>
+      </form>
+    </section>
+
+    <section id="results-panel" class="panel" aria-labelledby="results-title">
+      <div class="panel-heading"><div><span>Шаг 3</span><h2 id="results-title">Результат контроля</h2></div>
+        <span id="run-status" class="status">—</span></div>
+      <div id="metrics" class="metrics"></div>
+      <div class="result-grid">
+        <article class="result-card"><header><div><span>Контрольный отчёт</span><h3>Полная трассировка расчёта</h3></div><span class="doc-icon">XLSX</span></header>
+          <p>15 листов: исходные строки, остатки, кандидаты, блокировки и контроль до/после.</p>
+          <a id="control-download" class="secondary button" href="#">Скачать run_control.xlsx</a></article>
+        <article class="result-card export"><header><div><span>Выгрузка 1С</span><h3>Только доказанные проводки</h3></div><span class="shield">✓</span></header>
+          <p id="export-explanation">Экспорт станет доступен после успешной проверки глобальных инвариантов.</p>
+          <button id="export-button" class="primary" disabled>Сформировать выгрузку</button><div id="export-files"></div></article>
+      </div>
+      <div class="blockers"><div class="table-heading"><div><span>Диагностика</span><h3>Блокировки и причины</h3></div>
+        <button id="refresh-blockers" class="text-button">Обновить</button></div>
+        <div class="table-wrap"><table><thead><tr><th>Код</th><th>Описание</th><th>Период</th><th>Счёт</th><th>Подразделение</th><th>Сумма</th></tr></thead><tbody id="blocker-rows"></tbody></table></div></div>
+      <div class="action-row"><button class="secondary" type="button" data-back="selection">← Новый расчёт</button></div>
+    </section>
+  </main>
+  <footer><span>HAT <b>v1.0</b></span><span>Точные счета · Decimal · Детерминированные ID · Без fuzzy matching</span></footer>
+  <div id="loader" class="loader hidden" aria-live="polite"><div></div><b>Выполняется проверка…</b><small>Не закрывайте страницу</small></div>
+</body>
+</html>
