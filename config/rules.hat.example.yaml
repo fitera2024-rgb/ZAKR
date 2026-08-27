@@ -1,0 +1,50 @@
+contract_version: HAT-TRANSFER-CONTRACT-v1
+scope:
+  root_organization_code: ROOT-001
+  include_root: true
+  include_all_descendants: true
+  forbid_cross_root_matching: true
+  require_stable_codes_for_export: true
+selection:
+  scenario: Факт
+  date_from: '2025-01-01'
+  date_to: '2025-03-31'
+  period_granularity: month
+  selected_accounts: ['25', '26', '44.1']
+  include_subaccounts: false
+calculation:
+  amount_tolerance: '0.05'
+  candidate_mode: MISSING_OR_INSUFFICIENT_DEBIT
+  require_actual_debit_evidence: true
+  require_actual_credit_evidence: true
+  require_equal_residuals: true
+  allow_partial_transfer: false
+  require_zero_after: true
+  require_both_absolute_balances_to_decrease: true
+  money_rounding: ROUND_HALF_UP
+accounts:
+  '25': {enabled: true, matching_profile: EXACT_ANALYTICS, required_analytics: [direction_of_activity, subconto1, subconto2, subconto3, subconto4]}
+  '26': {enabled: true, matching_profile: EXACT_ANALYTICS, required_analytics: [direction_of_activity, subconto1, subconto2, subconto3, subconto4]}
+  '44.1': {enabled: true, matching_profile: EXACT_ANALYTICS, required_analytics: [direction_of_activity, subconto1, subconto2, subconto3, subconto4]}
+pairing:
+  allow_same_organization: true
+  allow_cross_organization_within_root: true
+  allowed_mapping_sources: [EXPLICIT_OVERRIDE, HIERARCHY_LINK, STABLE_EQUIVALENCE_CODE, CONFIGURED_EXACT_TRANSFORM]
+  forbid_fuzzy_matching: true
+  require_unique_pair: true
+  organization_pairs: []
+  department_pairs: []
+  exact_transforms: []
+exclusions: {exclude_no_rebilling: true, excluded_organization_codes: [], excluded_department_codes: [], excluded_accounts: []}
+export:
+  enabled: true
+  operation_kind: REPOST
+  document_date_policy: TARGET_CREDIT_DATE_IF_UNIQUE_ELSE_PERIOD_END
+  organization_encoding_mode: DEPARTMENT_OWNER
+  document_organization_policy: ROOT_OR_CONFIGURED
+  configured_document_organization_code: null
+  require_adapter_capability_test: true
+  adapter_capability_proven: false
+  all_or_nothing_export: true
+  rule_code: HAT_TRANSFER_EXACT_V1
+provenance: {store_input_sha256: true, store_rules_sha256: true, deterministic_ids: true, detect_already_applied: true}

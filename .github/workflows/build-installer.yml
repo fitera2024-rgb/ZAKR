@@ -1,0 +1,43 @@
+name: Build HAT installer
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build deterministic installer
+        run: python scripts/build_installer.py
+
+      - name: Verify checksum and archive contents
+        run: |
+          cd dist
+          sha256sum -c HAT-Installer-1.0.1.zip.sha256
+          if unzip -Z1 HAT-Installer-1.0.1.zip | grep -E '(local_inputs|runs/|\.xlsx$|\.xls$|\.csv$)'; then
+            echo "Forbidden accounting data found in archive"
+            exit 1
+          fi
+
+      - name: Publish downloadable artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: HAT-Installer-1.0.1
+          path: |
+            dist/HAT-Installer-1.0.1.zip
+            dist/HAT-Installer-1.0.1.zip.sha256
+          if-no-files-found: error
+          retention-days: 90
